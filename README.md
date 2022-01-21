@@ -6,8 +6,6 @@ It follows the general interface that models are a product of training data and 
 
 Additionally, validation routines such as cross validation are supported.
 
-This 
-
 ## Functional Architecture
 
 There are three main types of classes
