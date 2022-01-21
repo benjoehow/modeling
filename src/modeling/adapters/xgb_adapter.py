@@ -1,24 +1,12 @@
 import xgboost as xgb
+from model_adapter import model_adapter
 
-
-class xgb_adapter:
+class xgb_adapter(model_adapter):
+    
+    _skip_job_keys = ["num_boost_round"]
     
     def __init__(self):
         pass
-    
-    def get_jobs(self, params):
-        jobs = [params]
-        
-        for key in params:
-            if key == "num_boost_round":
-                continue
-            if isinstance(params[key], list):
-                new_jobs = []
-                for job in jobs:
-                    new_jobs.extend(self._expand_params(params = job, key = key))
-                jobs = new_jobs
-                                    
-        return jobs
                 
     def _expand_params(self, params, key):
         
@@ -48,5 +36,8 @@ class xgb_adapter:
                           num_boost_round = num_boost_round)
         return ret
         
-    #def predict(self, model, data):
+    def get_post_train_diagnostics(self, model):
+        pass
         
+    def predict(self, model, data):
+        pass
