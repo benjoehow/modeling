@@ -7,20 +7,20 @@ class model_adapter(ABC):
     def __init__(self):
         pass
     
-    def get_jobs(self, params):
+    def get_metaparameter_grid(self, params):
         
-        ret = [params]
+        grid = [params]
         
         for key in params:
             if key in self._skip_job_keys:
                 continue
             if isinstance(params[key], list):
-                new_jobs = []
-                for job in ret:
-                    new_jobs.extend(self._expand_params(params = job, key = key))
-                ret = new_jobs
+                new_grid = []
+                for grid_slice in grid:
+                    new_grid.extend(self._expand_params(params = grid_slice, key = key))
+                grid = new_grid
                                     
-        return ret
+        return grid
     
     def _expand_params(self, params, key):
         

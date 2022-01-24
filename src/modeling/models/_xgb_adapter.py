@@ -1,7 +1,7 @@
 import xgboost as xgb
-from model_adapter import model_adapter
+from modeling.models import model_adapter
 
-class xgb_adapter(model_adapter):
+class xgboost_adapter(model_adapter):
     
     _skip_job_keys = ["num_boost_round"]
     
@@ -32,8 +32,8 @@ class xgb_adapter(model_adapter):
         params_run.pop("num_boost_round")
         
         ret = xgb.train(params = params_run,
-                          dtrain = data,
-                          num_boost_round = num_boost_round)
+                        dtrain = data,
+                        num_boost_round = num_boost_round)
         return ret
         
     def get_post_train_diagnostics(self, model):
