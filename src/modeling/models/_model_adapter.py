@@ -17,7 +17,8 @@ class model_adapter(ABC):
             if isinstance(params[key], list):
                 new_grid = []
                 for grid_slice in grid:
-                    new_grid.extend(self._expand_params(params = grid_slice, key = key))
+                    current_params = self._expand_params(params = grid_slice, key = key)
+                    new_grid.extend(current_params)   
                 grid = new_grid
                                     
         return grid

@@ -6,6 +6,9 @@ src/modeling/expeditor.py
 src/modeling/models/__init__.py
 src/modeling/models/_model_adapter.py
 src/modeling/models/_xgb_adapter.py
+src/modeling/processors/__init__.py
+src/modeling/processors/serial_processor.py
+src/modeling/validation/__init__.py
 src/modeling_benjoehow.egg-info/PKG-INFO
 src/modeling_benjoehow.egg-info/SOURCES.txt
 src/modeling_benjoehow.egg-info/dependency_links.txt
