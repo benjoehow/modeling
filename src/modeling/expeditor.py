@@ -105,7 +105,9 @@ class Expeditor():
             model = train_func(df = df, params = params)
             holdout_data = package_data_for_model(holdout)
             predictions = model.predict(holdout_data)
+            print(predictions.head())
             predictions = predictions > np.median(predictions)
+            print(predictions.head())
             evaldf = eval_func(truth = holdout[target_field],
                                predictions = predictions)
             
