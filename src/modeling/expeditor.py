@@ -11,10 +11,9 @@ from .runner import Runner
 
 class Expeditor():
 
-    def __init__(self, df, config):
+    def __init__(self, config):
         self.config = config
-        self._model_adapter = model_factory(key = self.config["model"]["id"])
-        self._compile_tasks(df = df)
+        self._model_adapter = model_factory(model_config = self.config["model"])
         
     def get_new_runner(self, df):
         
@@ -61,19 +60,20 @@ class Expeditor():
         return splits
             
     def _configure_train_func(self):
-        
-        package_data_for_model = partial(self._model_adapter.prep_data,
-                                         label = self.config["data"]["target"],
-                                         features = self.config["data"]["features"]["asis"])
                                                                                                      
-        def train_func(df, params):
-            data = package_data_for_model(df)
-            model = self._model_adapter.train(data = data,
-                                              params = params)
+        def train_func(df, params, features, target):
+            model = self._model_adapter.train(df = df,
+                                              params = params,
+                                              features = features,
+                                              target = target)
                                          
             return model
+        
+        ret = partial(train_func,
+                      features = self.config["data"]["features"]["asis"],
+                      target = self.config["data"]["target"])
                                          
-        return train_func
+        return ret
     
     def _configure_eval_func(self):
         
@@ -86,10 +86,10 @@ class Expeditor():
             
             return ret
         
-        eval_func = partial(eval_func_template,
-                            metrics = self.config["validation"]["evalulation"]["metrics"])
+        ret = partial(eval_func_template,
+                      metrics = self.config["validation"]["evalulation"]["metrics"])
         
-        return eval_func
+        return ret
                 
     
     def _configure_train_and_eval_func(self):
@@ -97,24 +97,17 @@ class Expeditor():
         train_func = self._configure_train_func()
         eval_func = self._configure_eval_func()
         
-        package_data_for_model = partial(self._model_adapter.prep_data,
-                                         label = self.config["data"]["target"],
-                                         features = self.config["data"]["features"]["asis"])
-        
-        def train_and_eval_template(df, params, holdout, target_field):
-            model = train_func(df = df, params = params)
-            holdout_data = package_data_for_model(holdout)
-            predictions = model.predict(holdout_data)
-            print(predictions.head())
-            predictions = predictions > np.median(predictions)
-            print(predictions.head())
-            evaldf = eval_func(truth = holdout[target_field],
+        def train_and_eval_template(df, params, holdout, target):
+            model = train_func(df = df,
+                               params = params)
+            predictions = model.predict(df = holdout)
+            evaldf = eval_func(truth = holdout[target].to_list(),
                                predictions = predictions)
             
             return evaldf
         
         train_and_eval_func = partial(train_and_eval_template,
-                                      target_field = self.config["data"]["target"])
+                                      target = self.config["data"]["target"])
             
         return train_and_eval_func
     
