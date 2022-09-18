@@ -27,7 +27,11 @@ class xgboost_adapter(model_adapter):
                            feature_names = features)
         
         params_run = params.copy()
-        num_boost_round = max(params_run["num_boost_round"])
+        if type(params_run["num_boost_round"]) == list:
+            num_boost_round = max(params_run["num_boost_round"])
+        else:
+            num_boost_round = params_run["num_boost_round"]
+        
         params_run.pop("num_boost_round")
         
         model = xgb.train(params = params_run,
@@ -57,6 +61,5 @@ class xgboost_wrapper(model_wrapper):
         
         predictions = self._model.predict(data)
         
-        predictions = (predictions >= 0.7).astype(int)
         return predictions
         

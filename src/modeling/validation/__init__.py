@@ -41,6 +41,20 @@ _metric_lookup["sklearn"]["precision_recall_curve"] = skmetrics.precision_recall
 _metric_lookup["sklearn"]["precision_recall_fscore_support"] = skmetrics.precision_recall_fscore_support
 _metric_lookup["sklearn"]["precision_score"] = skmetrics.precision_score
 _metric_lookup["sklearn"]["recall_score"] = skmetrics.recall_score
+_metric_lookup["sklearn"]["explained_variance"] = skmetrics.explained_variance_score
+_metric_lookup["sklearn"]["max_error"] = skmetrics.max_error
+_metric_lookup["sklearn"]["neg_mean_absolute_error"] = skmetrics.mean_absolute_error
+_metric_lookup["sklearn"]["neg_mean_squared_error"] = skmetrics.mean_squared_error
+_metric_lookup["sklearn"]["neg_root_mean_squared_error"] = skmetrics.mean_squared_error
+_metric_lookup["sklearn"]["neg_mean_squared_log_error"] = skmetrics.mean_squared_log_error
+_metric_lookup["sklearn"]["neg_median_absolute_error"] = skmetrics.median_absolute_error
+_metric_lookup["sklearn"]["r2"] = skmetrics.r2_score
+_metric_lookup["sklearn"]["neg_mean_poisson_deviance"] = skmetrics.mean_poisson_deviance
+_metric_lookup["sklearn"]["neg_mean_gamma_deviance"] = skmetrics.mean_gamma_deviance
+_metric_lookup["sklearn"]["neg_mean_absolute_percentage_error"] = skmetrics.mean_absolute_percentage_error
+#_metric_lookup["sklearn"]["d2_absolute_error_score"] = skmetrics.d2_absolute_error_score
+#_metric_lookup["sklearn"]["d2_pinball_score"] = skmetrics.d2_pinball_score
+#_metric_lookup["sklearn"]["d2_tweedie_score"] = skmetrics.d2_tweedie_score
 
 def metric_factory(key):
     
