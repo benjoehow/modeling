@@ -11,7 +11,7 @@ class Serial_Processor:
         self.df = df
         self.func = func
         
-    def get_new_queue():
+    def get_new_queue(self):
         return Queue() 
         
     def process(self, queue_in, queue_out):
@@ -21,5 +21,5 @@ class Serial_Processor:
         
         while not queue_in.empty():
             params = queue_in.get()
-            result = self.func(df = self.df, **params)
+            result = self.func(df = self.df, params = params)
             queue_out.put(result)

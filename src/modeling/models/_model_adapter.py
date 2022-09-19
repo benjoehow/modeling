@@ -4,8 +4,8 @@ class model_adapter(ABC):
     
     _skip_job_keys = []
     
-    def __init__(self):
-        pass
+    def __init__(self, model_config):
+        super.__init__(model_config = config)
     
     def get_metaparameter_grid(self, params):
         
@@ -38,16 +38,23 @@ class model_adapter(ABC):
         return NotImplemented
     
     @abstractmethod
-    def train(self):
+    def train(self, features, target):
         return NotImplemented
     
     @abstractmethod
     def get_post_train_diagnostics(self, model):
         return NotImplemented
-    
-    @abstractmethod
-    def predict(self, params, data):
-        return NotImplemented
         
     def evalulate_result(self, target_vector, predicted_vector, job_params, eval_params):
+        return NotImplemented
+    
+    
+class model_wrapper(ABC):
+    
+    def __init__(self, model, features):
+        self._model = model
+        self._features = features
+    
+    @abstractmethod
+    def predict(self, data):
         return NotImplemented

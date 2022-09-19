@@ -1,12 +1,13 @@
 import xgboost as xgb
-from modeling.models import model_adapter
+from modeling.models import model_adapter, model_wrapper
+from modeling import proba_cutoff
 
 class xgboost_adapter(model_adapter):
     
     _skip_job_keys = ["num_boost_round"]
     
-    def __init__(self):
-        pass
+    def __init__(self, model_config):
+        self.model_config = model_config
                 
     def _expand_params(self, params, key):
         
@@ -18,26 +19,47 @@ class xgboost_adapter(model_adapter):
             ret.append(params_copy)
         
         return ret
-          
-    def prep_data(self, df, label, features):
-        ret = xgb.DMatrix(data = df[features],
-                          label = df[label],
-                          feature_names = features)
-        return ret 
         
-    def train(self, params, data):
+    def train(self, params, df, features, target):
+        
+        data = xgb.DMatrix(data = df[features],
+                           label = df[target],
+                           feature_names = features)
         
         params_run = params.copy()
-        num_boost_round = max(params_run["num_boost_round"])
+        if type(params_run["num_boost_round"]) == list:
+            num_boost_round = max(params_run["num_boost_round"])
+        else:
+            num_boost_round = params_run["num_boost_round"]
+        
         params_run.pop("num_boost_round")
         
-        ret = xgb.train(params = params_run,
-                        dtrain = data,
-                        num_boost_round = num_boost_round)
+        model = xgb.train(params = params_run,
+                          dtrain = data,
+                          num_boost_round = num_boost_round)
+        
+        ret = xgboost_wrapper(model = model,
+                              features = features)
+        
         return ret
         
     def get_post_train_diagnostics(self, model):
         pass
         
-    def predict(self, model, data):
-        pass
+    
+
+class xgboost_wrapper(model_wrapper):
+    
+    def __init__(self, model, features):
+        self._model = model
+        self._features = features
+        
+    def predict(self, df):
+        
+        data = xgb.DMatrix(data = df[self._features],
+                           feature_names = self._features)
+        
+        predictions = self._model.predict(data)
+        
+        return predictions
+        
