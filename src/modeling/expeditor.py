@@ -18,11 +18,15 @@ class Expeditor():
         tasks = self.get_tasks(df = df)
         if "validation" in self.config.keys(): 
             if "splitter" in self.config["validation"].keys():
+                func = self._configure_split_train_eval_func()
                 order = CrossValidationOrder(config = self.config,
-                                             tasks = tasks)
+                                             tasks = tasks,
+                                             func = func)
         else:
+            func = self._configure_train_func()
             order = TrainOrder(config = self.config,
-                               tasks = tasks
+                               tasks = tasks,
+                               func = func
                               )
         return order
     
@@ -31,14 +35,6 @@ class Expeditor():
         tasks = self._compile_tasks(df = df)
         
         return tasks
-    
-    def get_func(self):
-        if "validation" in self.config.keys(): 
-            if "splitter" in self.config["validation"].keys():
-                func = self._configure_split_train_eval_func()
-        else:
-            func = self._configure_train_func()
-        return func
 
     def _compile_tasks(self, df):
         

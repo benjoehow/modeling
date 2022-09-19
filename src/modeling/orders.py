@@ -3,11 +3,12 @@ import pandas as pd
 
 class Order(ABC):
     
-    def __init__(self, config, tasks):
+    def __init__(self, config, tasks, func):
         self.is_finished = False
         self.completed_tasks = None
         self.config = config
         self.tasks = tasks
+        self.func = func
         
     def get_tasks(self):
         return NotImplemented
@@ -20,8 +21,8 @@ class Order(ABC):
     
 class CrossValidationOrder(Order):
     
-    def __init__(self, config, tasks):
-        super().__init__(config = config, tasks = tasks)
+    def __init__(self, config, tasks, func):
+        super().__init__(config = config, tasks = tasks, func = func)
         self.completed_tasks = {'eval': pd.DataFrame(),
                                 'predictions': pd.DataFrame()
                                }
@@ -40,8 +41,8 @@ class CrossValidationOrder(Order):
             
 class TrainOrder(Order):
     
-    def __init__(self, config, tasks):
-        super().__init__(config = config, tasks = tasks)
+    def __init__(self, config, tasks, func):
+        super().__init__(config = config, tasks = tasks, func = func)
         self.completed_tasks = None
         
     def get_tasks(self):

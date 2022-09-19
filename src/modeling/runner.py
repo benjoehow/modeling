@@ -3,6 +3,19 @@ import time
 
 class Runner():
     
+    """
+    The Runner gives tasks from an Order to a Processor.
+    
+    ...
+    Attributes
+    ----------
+    order: Order
+    
+    Methods
+    
+    
+    """
+    
     def __init__(self, order):
         self.order = order
     
