@@ -1,10 +1,8 @@
 # modeling
 
-This package is used to train and evaluate machine learning models from varying different algorithms. 
+This codebase is used for the training and evaluation of machine learning models in a way that is configurable and reproducible.
 
-It follows the general interface that models are a product of training data and metaparameters. 
-
-Additionally, validation routines such as cross validation will also be supported.
+A single configuration file details model training and stores metadata during training. This enables traceability after training and efficient reproduction.
 
 ## Functional Architecture
 
