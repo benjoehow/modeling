@@ -3,6 +3,24 @@ import pandas as pd
 
 class Order(ABC):
     
+    """
+    Abstract Base Class for orders. 
+    
+    Orders contain:
+     - A function to apply to a pandas.DataFrame
+     - A list of tasks (parameters to the above function)
+     - A 
+    
+    ...
+    Attributes
+    ----------
+    order: Order
+    
+    Methods
+    
+    
+    """
+    
     def __init__(self, config, tasks, func):
         self.is_finished = False
         self.completed_tasks = None

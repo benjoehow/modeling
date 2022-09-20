@@ -9,6 +9,19 @@ from modeling.validation import splitter_factory, metric_factory
 from .orders import CrossValidationOrder, TrainOrder
 
 class Expeditor():
+    
+    """
+    The Expeditor gives tasks from an Order to a Processor.
+    
+    ...
+    Attributes
+    ----------
+    order: Order
+    
+    Methods
+    
+    
+    """
 
     def __init__(self, config):
         self.config = config
