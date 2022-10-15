@@ -45,7 +45,7 @@ class model_adapter(ABC):
     def get_post_train_diagnostics(self, model):
         return NotImplemented
         
-    def evalulate_result(self, target_vector, predicted_vector, job_params, eval_params):
+    def evalulate_result(self, model, holdout, task_params, eval_params):
         return NotImplemented
     
     
