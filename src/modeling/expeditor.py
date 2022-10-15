@@ -9,36 +9,76 @@ from modeling.validation import splitter_factory, metric_factory
 from .orders import CrossValidationOrder, TrainOrder
 
 class Expeditor():
+    
+    """
+    Configures an Order given a model config and data.
+    
+    The Expeditor processes the input config to compile 
+    the appropriate function and tasks that must be carried
+    out by downstream objects. 
+    
+    ...
+    Attributes
+    ----------
+    config: dict
+    
+    
+    Methods
+    -------
+    get_order(df)
+        
+    
+    """
 
-    def __init__(self, config):
+    def __init__(self, config: dict):
+        
+        """
+        
+        Parameters
+        ----------
+        config: dict
+                The input config 
+        """
+        
         self.config = config
         self._model_adapter = model_factory(model_config = self.config["model"])
         
-    def get_order(self, df):   
-        tasks = self.get_tasks(df = df)
+    def get_order(self, df):  
+        
+        """
+        
+        Parameters
+        ----------
+        df: dict
+            The input configuration 
+            
+        Returns
+        -------
+        order: Order
+               An order object populated with the neccessary fields to be processed by 
+               by downstream objects. 
+        """
+        
+        tasks = self._get_tasks(df = df)
         if "validation" in self.config.keys(): 
             if "splitter" in self.config["validation"].keys():
+                func = self._configure_split_train_eval_func()
                 order = CrossValidationOrder(config = self.config,
-                                             tasks = tasks)
+                                             tasks = tasks,
+                                             func = func)
         else:
+            func = self._configure_train_func()
             order = TrainOrder(config = self.config,
-                               tasks = tasks
+                               tasks = tasks,
+                               func = func
                               )
         return order
     
-    def get_tasks(self, df):
+    def _get_tasks(self, df):
         
         tasks = self._compile_tasks(df = df)
         
         return tasks
-    
-    def get_func(self):
-        if "validation" in self.config.keys(): 
-            if "splitter" in self.config["validation"].keys():
-                func = self._configure_split_train_eval_func()
-        else:
-            func = self._configure_train_func()
-        return func
 
     def _compile_tasks(self, df):
         
@@ -118,21 +158,35 @@ class Expeditor():
         def train_and_eval_template(df, params, holdout, target):
             model = train_func(df = df,
                                params = params)
+            cutoff = ("cutoff" in self.config["validation"])
+            evaldf, predictions = self._model_adapter.evalulate_result(model = model,
+                                                                       holdout = holdout,
+                                                                       target = target,
+                                                                       task_params = params["model_params"],
+                                                                       eval_func = eval_func,
+                                                                       cutoff = cutoff)
             
+            """
+            #-TODO: move to adapaters
             predictions_raw = model.predict(df = holdout)
             
             if "cutoff" in self.config["validation"]:
+                #-TODO allow for more cutoff options
                 predictions = (predictions_raw >= 0.7).astype(int)
             else:
                 predictions = predictions_raw
                 
+            row_id = holdout['row_id'].to_list()
             holdout_list = holdout[target].to_list()
 
             evaldf = eval_func(truth = holdout_list,
                                predictions = predictions)
             
-            predictions = pd.DataFrame({'predictions': predictions_raw,
+            predictions = pd.DataFrame({'row_id': row_id,
+                                        'predictions': predictions_raw,
                                         'truth': holdout_list})
+            #-TODO move to adapters
+            """
             
             return evaldf, predictions
         

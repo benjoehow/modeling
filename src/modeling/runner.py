@@ -3,11 +3,25 @@ import time
 
 class Runner():
     
+    """
+    The Runner gives tasks from an Order to a Processor.
+    
+    ...
+    Attributes
+    ----------
+    order: Order
+    
+    Methods
+    
+    
+    """
+    
     def __init__(self, order):
         self.order = order
     
     def run(self, processor):
         output_queue = self._process_in_background(processor = processor)
+        print("process started")
         while(not self.order.is_finished):
             self._empty_output_queue(output_queue = output_queue)
             time.sleep(10)
@@ -15,6 +29,7 @@ class Runner():
     def _empty_output_queue(self, output_queue):
         while not output_queue.empty():
             result = output_queue.get()
+            print("adding result")
             self.order.add_result(result = result)
             
     def _process_in_background(self, processor):

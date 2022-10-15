@@ -1,6 +1,8 @@
 
 from ._serial_processor import Serial_Processor
+from ._parallel_processor import Parallel_Processor
 
 __all__ = [
-    "serial_processor"
+    "Serial_Processor"
+    "Parallel_Processor"
 ]

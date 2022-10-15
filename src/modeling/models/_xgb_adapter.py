@@ -2,23 +2,14 @@ import xgboost as xgb
 from modeling.models import model_adapter, model_wrapper
 from modeling import proba_cutoff
 
+import pandas as pd
+
 class xgboost_adapter(model_adapter):
     
     _skip_job_keys = ["num_boost_round"]
     
     def __init__(self, model_config):
         self.model_config = model_config
-                
-    def _expand_params(self, params, key):
-        
-        ret = []
-        
-        for value in params[key]:
-            params_copy = params.copy()
-            params_copy[key] = value
-            ret.append(params_copy)
-        
-        return ret
         
     def train(self, params, df, features, target):
         
@@ -45,6 +36,49 @@ class xgboost_adapter(model_adapter):
         
     def get_post_train_diagnostics(self, model):
         pass
+    
+    def evalulate_result(self, model, holdout, target, task_params, eval_func, cutoff = False):
+        evaldf_final = pd.DataFrame()
+        predictions_final = pd.DataFrame()
+        
+        num_boost_rounds = task_params["num_boost_round"]
+        #-TODO: Generalize
+        if type(num_boost_rounds) == int:
+            num_boost_rounds = [num_boost_rounds]
+        for num_boost_round in num_boost_rounds:
+            predictions_raw = model.predict(df = holdout,
+                                            num_boost_round_eval = num_boost_round)
+            
+            if cutoff:
+                #-TODO allow for more cutoff options
+                predictions = (predictions_raw >= 0.7).astype(int)
+            else:
+                predictions = predictions_raw
+                
+            row_id = holdout['row_id'].to_list()
+            holdout_list = holdout[target].to_list()
+
+            evaldf = eval_func(truth = holdout_list,
+                               predictions = predictions)
+            
+            evaldf['num_boost_round'] = num_boost_round
+            for key in task_params.keys():
+                if key != 'num_boost_round':
+                    evaldf[key] = task_params[key]
+            
+            predictions = pd.DataFrame({'row_id': row_id,
+                                        'predictions': predictions_raw,
+                                        'truth': holdout_list})
+            
+            predictions['num_boost_round'] = num_boost_round
+            for key in task_params.keys():
+                if key != 'num_boost_round':
+                    predictions[key] = task_params[key]
+            
+            evaldf_final = pd.concat([evaldf, evaldf_final])
+            predictions_final = pd.concat([predictions, predictions_final])
+                    
+        return evaldf_final, predictions_final
         
     
 
@@ -54,12 +88,13 @@ class xgboost_wrapper(model_wrapper):
         self._model = model
         self._features = features
         
-    def predict(self, df):
+    def predict(self, df, num_boost_round_eval = 0):
         
         data = xgb.DMatrix(data = df[self._features],
                            feature_names = self._features)
         
-        predictions = self._model.predict(data)
+        predictions = self._model.predict(data,
+                                          iteration_range=(0, num_boost_round_eval))
         
         return predictions
         
