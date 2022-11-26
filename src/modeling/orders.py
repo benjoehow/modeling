@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 
+from modeling.models import model_factory
+from modeling.validation import splitter_factory, metric_factory
+from .core_functions import *
+
 class Order(ABC):
     
     """
@@ -15,6 +19,7 @@ class Order(ABC):
     ...
     Attributes
     ----------
+    df: 
     is_finished: boolean
     completed_tasks: 
     config: dict
@@ -29,7 +34,8 @@ class Order(ABC):
    
     """
     
-    def __init__(self, config, tasks, func):
+    def __init__(self, df, config, tasks, func):
+        self.df = df
         self.is_finished = False
         self.completed_tasks = None
         self.config = config
@@ -77,8 +83,12 @@ class CrossValidationOrder(Order):
    
     """
     
-    def __init__(self, config, tasks, func):
-        super().__init__(config = config, tasks = tasks, func = func)
+    def __init__(self, df, config, tasks, func):
+        super().__init__(df = df,
+                         config = config,
+                         tasks = tasks,
+                         func = func)
+        
         self.completed_tasks = {'eval': pd.DataFrame(),
                                 'predictions': pd.DataFrame()
                                }
@@ -97,8 +107,12 @@ class CrossValidationOrder(Order):
             
 class TrainOrder(Order):
     
-    def __init__(self, config, tasks, func):
-        super().__init__(config = config, tasks = tasks, func = func)
+    def __init__(self, df, config, tasks, func):
+        super().__init__(df = df, 
+                         config = config,
+                         tasks = tasks,
+                         func = func)
+        
         self.completed_tasks = None
         
     def get_tasks(self):
@@ -107,3 +121,76 @@ class TrainOrder(Order):
     def add_result(self, result):
         self.completed = result
         self.is_finished = True
+        
+        
+def get_order(df, config):  
+    
+    """
+    
+    Parameters
+    ----------
+    df: dict
+        The input configuration 
+        
+    Returns
+    -------
+    order: Order
+            An order object populated with the neccessary fields to be processed by 
+            by downstream objects. 
+    """
+    
+    tasks = _compile_tasks(df = df, config = config)
+    if "validation" in config.keys(): 
+        if "splitter" in config["validation"].keys():
+            func = configure_split_train_eval(config = config)
+            order = CrossValidationOrder(df = df,
+                                            config = config,
+                                            tasks = tasks,
+                                            func = func)
+    else:
+        func = configure_train_func(config = config)
+        order = TrainOrder(df = df, 
+                            config = config,
+                            tasks = tasks,
+                            func = func
+                            )
+    return order
+
+def _compile_tasks(df, config):
+    
+    model_adapter = model_factory(model_config = config["model"])
+    
+    tasks = model_adapter.get_metaparameter_grid(config["model"]["params"])
+                    
+    new_tasks = []
+    for task in tasks:
+        new_tasks.append({"model_params": task})
+    tasks = new_tasks
+    
+    if "validation" in config.keys():
+        if "splitter" in config["validation"].keys():
+            splits = _get_splits(df = df, config = config)
+            new_tasks = []
+            for s in range(len(splits)):
+                for t in range(len(tasks)):
+                    new_task = tasks[t].copy()
+                    new_task["splits"] = splits[s]
+                    new_task["split_id"] = s
+                    new_task["param_id"] = t
+                    new_task["task_id"] = (s*len(tasks)) + t
+                    new_tasks.append(new_task)
+            tasks = new_tasks
+    
+    return tasks
+
+def _get_splits(df, config):
+    
+    split_func  = splitter_factory(config["validation"]["splitter"]["id"])
+    splitter = split_func(**config["validation"]["splitter"]["params"])
+    
+    splits = []
+    for train_index, test_index in splitter.split(df):
+        split_indices = {"train": train_index, "holdout": test_index}
+        splits.append(split_indices)
+        
+    return splits                                 

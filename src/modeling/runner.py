@@ -1,5 +1,8 @@
-import threading
+from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Manager
 import time
+import threading
+
 
 class Runner():
     
@@ -16,39 +19,56 @@ class Runner():
     
     """
     
-    def __init__(self, order):
-        self.order = order
+    def __init__(self, workers = 1, wait_time = 10):
+        self._manager = Manager()
+        self._max_workers = workers
+        self._executor = ProcessPoolExecutor(max_workers = self._max_workers)
+        self._wait_time = wait_time
+        self._futures = []
     
-    def run(self, processor):
-        output_queue = self._process_in_background(processor = processor)
+    def run(self, order):
         print("process started")
-        while(not self.order.is_finished):
-            self._empty_output_queue(output_queue = output_queue)
-            time.sleep(10)
+        self._process_in_background(order = order)
+    
+    def _process(self, order, output_queue):
+        
+        input_queue = self._manager.Queue() 
+        for task in order.get_tasks():
+            input_queue.put(task)
+        
+        self._futures.extend([self._executor.submit(_parallel_processor_wrapper,
+                                              df = order.df,
+                                              func = order.func,
+                                              queue_in = input_queue,
+                                              queue_out = output_queue)
+                              for i in range(self._max_workers)]
+                            )
 
-    def _empty_output_queue(self, output_queue):
-        while not output_queue.empty():
-            result = output_queue.get()
-            print("adding result")
-            self.order.add_result(result = result)
             
-    def _process_in_background(self, processor):
-        input_queue = processor.get_new_queue()
-        self._load_input_queue(input_queue = input_queue)
+    def _process_in_background(self, order):
+
+        output_queue = self._manager.Queue() 
         
-        output_queue = processor.get_new_queue()
-        
-        process_thread = threading.Thread(target = processor.process,
+        process_thread = threading.Thread(target = self._process,
                                           name = "processor",
-                                          kwargs = {"queue_in": input_queue,
-                                                    "queue_out": output_queue}
+                                          kwargs = {"order": order,
+                                                    "output_queue": output_queue}
                                          )
         process_thread.start()
-        return output_queue
+        
+        while(not order.is_finished): 
+            while not output_queue.empty():
+                result = output_queue.get()
+                print("adding result")
+                order.add_result(result = result)
+            time.sleep(self._wait_time)
+        
+        return 0
     
-    def _load_input_queue(self, input_queue):
-        for task in self.order.get_tasks():
-            input_queue.put(task)
-    
-    def get_results(self):
-        return self.order.get_results()
+         
+def _parallel_processor_wrapper(df, func, queue_in, queue_out):
+    while not queue_in.empty():
+        params = queue_in.get()
+        ret = func(df = df,
+                   params = params)
+        queue_out.put(ret)
