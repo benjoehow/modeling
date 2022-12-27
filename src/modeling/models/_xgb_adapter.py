@@ -1,6 +1,5 @@
 import xgboost as xgb
 from modeling.models import model_adapter, model_wrapper
-from modeling import proba_cutoff
 
 import pandas as pd
 
@@ -37,7 +36,14 @@ class xgboost_adapter(model_adapter):
     def get_post_train_diagnostics(self, model):
         pass
     
-    def evalulate_result(self, model, holdout, target, task_params, eval_func, cutoff = False):
+    def evalulate_result(self,
+                         model, 
+                         holdout,
+                         target,
+                         task_params,
+                         eval_func,
+                         cutoff = False):
+        
         evaldf_final = pd.DataFrame()
         predictions_final = pd.DataFrame()
         
@@ -48,18 +54,12 @@ class xgboost_adapter(model_adapter):
         for num_boost_round in num_boost_rounds:
             predictions_raw = model.predict(df = holdout,
                                             num_boost_round_eval = num_boost_round)
-            
-            if cutoff:
-                #-TODO allow for more cutoff options
-                predictions = (predictions_raw >= 0.7).astype(int)
-            else:
-                predictions = predictions_raw
                 
             row_id = holdout['row_id'].to_list()
             holdout_list = holdout[target].to_list()
 
             evaldf = eval_func(truth = holdout_list,
-                               predictions = predictions)
+                               predictions = predictions_raw)
             
             evaldf['num_boost_round'] = num_boost_round
             for key in task_params.keys():

@@ -3,6 +3,8 @@ from multiprocessing import Manager
 import time
 import threading
 
+import sys
+
 
 class Runner():
     
@@ -61,6 +63,9 @@ class Runner():
                 result = output_queue.get()
                 print("adding result")
                 order.add_result(result = result)
+            for future in self._futures:
+                if future.exception() is not None:
+                    sys.exit(future.exception())
             time.sleep(self._wait_time)
         
         return 0

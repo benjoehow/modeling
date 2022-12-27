@@ -29,7 +29,12 @@ def eval_func_template(truth, predictions, metrics):
     scores = {}
     for key in metrics:
         scorer = metric_factory(key)
-        scores[key] = [scorer(truth, predictions)]
+        if scorer.requires_binary_output:
+            #-TODO allow for more cutoff options
+            predictions_final = (predictions >= 0.7).astype(int)
+        else:
+            predictions_final = predictions
+        scores[key] = [scorer(truth, predictions_final)]
     ret = pd.DataFrame.from_dict(scores)
             
     return ret
