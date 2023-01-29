@@ -105,6 +105,12 @@ class CrossValidationOrder(Order):
         if(len(self.tasks) == self.completed_tasks['eval'].task_id.nunique()):
             self.is_finished = True
             
+    def get_results(self):
+        ret = self.completed_tasks.copy()
+        ret['eval'] = ret['eval'].to_dict()
+        ret['predictions'] = ret['predictions'].to_dict()
+        return ret
+            
 class TrainOrder(Order):
     
     def __init__(self, df, config, tasks, func):

@@ -67,6 +67,7 @@ class Runner():
                 if future.exception() is not None:
                     sys.exit(future.exception())
             time.sleep(self._wait_time)
+        print("order finished")
         
         return 0
     
