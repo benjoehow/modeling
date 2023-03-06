@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
+import logging
+import uuid
 
 from modeling.models import model_factory
 from modeling.validation import splitter_factory, metric_factory
@@ -34,25 +36,38 @@ class Order(ABC):
    
     """
     
-    def __init__(self, df, config, tasks, func):
+    def __init__(self, df, config, tasks, func,
+                 order_id = str(uuid.uuid4())):
+        
+        self.order_id = order_id
         self.df = df
         self.is_finished = False
+        self.completed_task_count = 0
         self.completed_tasks = None
         self.config = config
         self.tasks = tasks
+        self.total_tasks = len(self.tasks)
         self.func = func
-        
+    
+    @abstractmethod
     def get_tasks(self):
         return NotImplemented
     
     def add_result(self, result):
+        self.completed_task_count += 1
+        self._store_result(result)
+        logging.info(f'Order {order.order_id} - adding result. ' + 
+                             f'{order.completed_task_count} / {order.total_tasks} tasks completed.')
+    
+    @abstractmethod
+    def _store_result(self, result):
         return NotImplemented
     
     def get_results(self):
         return self.completed_tasks
     
-class CrossValidationOrder(Order):
     
+class CrossValidationOrder(Order):
     
     """
     Cross Validation Order
@@ -96,7 +111,7 @@ class CrossValidationOrder(Order):
     def get_tasks(self):
         return self.tasks
     
-    def add_result(self, result):
+    def _store_result(self, result):
         
         self.completed_tasks['eval'] = pd.concat([self.completed_tasks['eval'],
                                             result['eval']])
@@ -124,8 +139,8 @@ class TrainOrder(Order):
     def get_tasks(self):
         return self.tasks
     
-    def add_result(self, result):
-        self.completed = result
+    def _store_result(self, result):
+        self.completed_tasks = result
         self.is_finished = True
         
         

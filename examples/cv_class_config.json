@@ -1,12 +1,24 @@
 {
+    "task": "classification",
+    "validation": {
+        "splitter": {
+            "id": "KFold",
+            "params": {
+                "n_splits": 2
+            }
+        },
+        "evalulation": {
+            "metrics": ["sklearn:precision_score"]
+        }
+    },
     "model": {
         "id": "xgboost",
         "params": {
             "objective": "reg:logistic",
             "eval_metric": "error",
-            "num_boost_round": 500,
+            "num_boost_round": [500, 1000],
             "eta": 0.3,
-            "max_depth": 6
+            "max_depth": [4, 6, 8]
         }
     },
     "data": {

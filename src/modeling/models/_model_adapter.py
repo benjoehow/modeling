@@ -58,3 +58,5 @@ class model_wrapper(ABC):
     @abstractmethod
     def predict(self, data):
         return NotImplemented
+    
+    

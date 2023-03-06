@@ -4,14 +4,6 @@ This codebase is used for the training and evaluation of machine learning models
 
 A single configuration file is used to kick off jobs and serves as metadata for traceability and efficient reproduction. 
 
-## Functional Architecture
-
-There are five main types of classes
-1. **Adapters**: Translates the various algorithm implmentations to a common interface
-2. **Expeditor**: Compiles what needs to computed (tasks) with Adapaters into Orders
-3. **Orders**: Record of the tasks that need to be done and what tasks are completed 
-3. **Runner** Coordinates tasks from an Order to a Processor 
-3. **Processors**: Determines how (e.g. serial, parrallel) tasks are executed
 
 ## Input & Output
 

@@ -1,13 +1,25 @@
 {
     "task": "regression",
+    "validation": {
+        "splitter": {
+            "id": "KFold",
+            "params": {
+                "n_splits": 2
+            }
+        },
+        "evalulation": {
+            "metrics": ["sklearn:mean_squared_error",
+                        "sklearn:mean_absolute_error"]
+        }
+    },
     "model": {
         "id": "xgboost",
         "params": {
             "objective": "reg:squarederror",
             "eval_metric": "rmse",
-            "num_boost_round": 500,
+            "num_boost_round": [500, 1000],
             "eta": 0.3,
-            "max_depth": 6
+            "max_depth": [4, 6, 8]
         }
     },
     "data": {

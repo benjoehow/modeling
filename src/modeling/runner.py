@@ -1,5 +1,6 @@
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import Manager
+import logging
 import time
 import threading
 
@@ -29,7 +30,7 @@ class Runner():
         self._futures = []
     
     def run(self, order):
-        print("process started")
+        logging.info(f'Order {order.order_id} - started.')
         self._process_in_background(order = order)
     
     def _process(self, order, output_queue):
@@ -61,13 +62,14 @@ class Runner():
         while(not order.is_finished): 
             while not output_queue.empty():
                 result = output_queue.get()
-                print("adding result")
                 order.add_result(result = result)
+                logging.info(f'Order {order.order_id} - adding result. ' + 
+                             f'{order.completed_task_count} / {order.total_tasks} tasks completed.')
             for future in self._futures:
                 if future.exception() is not None:
                     sys.exit(future.exception())
             time.sleep(self._wait_time)
-        print("order finished")
+        logging.info(f'Order {order.order_id} - finished.')
         
         return 0
     

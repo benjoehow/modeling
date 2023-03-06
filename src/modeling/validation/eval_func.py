@@ -16,5 +16,5 @@ class EvalFuncWrapper():
         if "requires_binary_output" in tags: 
             self.requires_binary_output = True
             
-    def __call__(self, *args, **kwargs):          
+    def __call__(self, *args, **kwargs):    
         return self.eval_func(*args, **kwargs)

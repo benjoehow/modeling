@@ -51,6 +51,7 @@ class xgboost_adapter(model_adapter):
         #-TODO: Generalize
         if type(num_boost_rounds) == int:
             num_boost_rounds = [num_boost_rounds]
+            
         for num_boost_round in num_boost_rounds:
             predictions_raw = model.predict(df = holdout,
                                             num_boost_round_eval = num_boost_round)
