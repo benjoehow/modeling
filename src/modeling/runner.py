@@ -40,11 +40,12 @@ class Runner():
             input_queue.put(task)
         
         self._futures.extend([self._executor.submit(_parallel_processor_wrapper,
-                                              df = order.df,
-                                              func = order.func,
-                                              queue_in = input_queue,
-                                              queue_out = output_queue)
-                              for i in range(self._max_workers)]
+                                                    df = order.df,
+                                                    func = order.func,
+                                                    queue_in = input_queue,
+                                                    queue_out = output_queue)
+                               for i in range(min(len(order.get_tasks()),
+                                                  self._max_workers))]
                             )
 
             
@@ -63,8 +64,6 @@ class Runner():
             while not output_queue.empty():
                 result = output_queue.get()
                 order.add_result(result = result)
-                logging.info(f'Order {order.order_id} - adding result. ' + 
-                             f'{order.completed_task_count} / {order.total_tasks} tasks completed.')
             for future in self._futures:
                 if future.exception() is not None:
                     sys.exit(future.exception())

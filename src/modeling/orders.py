@@ -56,8 +56,8 @@ class Order(ABC):
     def add_result(self, result):
         self.completed_task_count += 1
         self._store_result(result)
-        logging.info(f'Order {order.order_id} - adding result. ' + 
-                             f'{order.completed_task_count} / {order.total_tasks} tasks completed.')
+        logging.info(f'Order {self.order_id} - adding result. ' + 
+                     f'{self.completed_task_count} / {self.total_tasks} tasks completed.')
     
     @abstractmethod
     def _store_result(self, result):
@@ -114,16 +114,17 @@ class CrossValidationOrder(Order):
     def _store_result(self, result):
         
         self.completed_tasks['eval'] = pd.concat([self.completed_tasks['eval'],
-                                            result['eval']])
+                                                  result['eval']])
         self.completed_tasks['predictions'] = pd.concat([self.completed_tasks['predictions'], 
-                                                   result['predictions']])
+                                                         result['predictions']])
+        
         if(len(self.tasks) == self.completed_tasks['eval'].task_id.nunique()):
             self.is_finished = True
             
     def get_results(self):
         ret = self.completed_tasks.copy()
-        ret['eval'] = ret['eval'].to_dict()
-        ret['predictions'] = ret['predictions'].to_dict()
+        ret['eval'] = ret['eval'].reset_index().to_dict()
+        ret['predictions'] = ret['predictions'].reset_index().to_dict()
         return ret
             
 class TrainOrder(Order):
@@ -165,16 +166,16 @@ def get_order(df, config):
         if "splitter" in config["validation"].keys():
             func = configure_split_train_eval(config = config)
             order = CrossValidationOrder(df = df,
-                                            config = config,
-                                            tasks = tasks,
-                                            func = func)
+                                         config = config,
+                                         tasks = tasks,
+                                         func = func)
     else:
         func = configure_train_func(config = config)
         order = TrainOrder(df = df, 
-                            config = config,
-                            tasks = tasks,
-                            func = func
-                            )
+                           config = config,
+                           tasks = tasks,
+                           func = func
+                          )
     return order
 
 def _compile_tasks(df, config):
