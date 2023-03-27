@@ -4,7 +4,7 @@ This codebase enables quick training, evaluation, and (soon) the deployment of m
 
 A single json configuration file is used to start jobs and serves as metadata for built-in reproducibility. 
 
-This package can be deployed as a web app, command line tool, or embedded package.
+This package can be deployed as a web app or embedded package.
 
 ## Input & Output
 
