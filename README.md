@@ -1,15 +1,16 @@
 # modeling
 
-This codebase is used for quick training, evaluation, and (soon) the deployment of machine learning models.
+This codebase enables quick training, evaluation, and (soon) the deployment of machine learning models.
 
 A single json configuration file is used to start jobs and serves as metadata for built-in reproducibility. 
 
+This package can be deployed as a web app, command line tool, or embedded package.
 
 ## Input & Output
 
-As input, the codebase takes in a json config file (metaparameters) and a pandas dataframe (training data).
+Input and output vary based on the type of job. For a cross validation job, inputs are a json config file (metaparameters) and a pandas dataframe (training data) and outputs are dataframes containing the cross validation results as well as the resulting predicitons.
 
-example:
+For example, the following is a config for a cross validation job:
 ```
 {
     "task": "regression",
@@ -46,10 +47,7 @@ example:
 }
 ```
 
+
 The mode is determined by the setup of the config:
-- Cross Validation has a "validation" section to the config and meta parameters can be supplied as an array under ["model"]["params"]
+- Cross validation has a "validation" section to the config and meta parameters can be supplied as an array under ["model"]["params"]
 - Single model training does not have a "validation" section and only single values can be supplied under ["model"]["params"]
-
-
-
-Depending on the mode specified by the config - training diagnostics (evaluation metrics, feature importances) or a trained model are output. 
