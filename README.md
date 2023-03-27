@@ -1,8 +1,8 @@
 # modeling
 
-This codebase is used for the training and evaluation of machine learning models.
+This codebase is used for quick training, evaluation, and (soon) the deployment of machine learning models.
 
-A single configuration file is used to kick off jobs and serves as metadata for traceability and efficient reproduction. 
+A single json configuration file is used to start jobs and serves as metadata for built-in reproducibility. 
 
 
 ## Input & Output
