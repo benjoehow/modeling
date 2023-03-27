@@ -37,7 +37,6 @@ example:
     },
     "data": {
         "target": "alcohol",
-        "holdout_id": "holdout",
         "features": {
             "asis": ["malic_acid", "ash", "alcalinity_of_ash", "magnesium",
                      "total_phenols", "flavanoids", "nonflavanoid_phenols", "proanthocyanins",
