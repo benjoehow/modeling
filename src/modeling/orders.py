@@ -3,9 +3,11 @@ import pandas as pd
 import logging
 import uuid
 
-from modeling.models import model_factory
-from modeling.validation import splitter_factory, metric_factory
-from .core_functions import *
+from modeling.models import trainer_factory
+from modeling.validation import splitter_factory
+from .core_functions import validate_config, configure_train_func, configure_split_train_eval
+from .config_constants import *
+
 
 class Order(ABC):
     
@@ -160,46 +162,48 @@ def get_order(df, config):
             An order object populated with the neccessary fields to be processed by 
             by downstream objects. 
     """
-    
+
+    validate_config(config = config)
+
     tasks = _compile_tasks(df = df, config = config)
-    if "validation" in config.keys(): 
-        if "splitter" in config["validation"].keys():
-            func = configure_split_train_eval(config = config)
+    if CONFIG_VALIDATION_KEY in config.keys(): 
+        if "splitter" in config[CONFIG_VALIDATION_KEY].keys():
+            split_train_eval = configure_split_train_eval(config = config)
             order = CrossValidationOrder(df = df,
                                          config = config,
                                          tasks = tasks,
-                                         func = func)
+                                         func = split_train_eval)
     else:
-        func = configure_train_func(config = config)
+        train_func = configure_train_func(config = config)
         order = TrainOrder(df = df, 
                            config = config,
                            tasks = tasks,
-                           func = func
+                           func = train_func
                           )
     return order
 
 def _compile_tasks(df, config):
     
-    model_adapter = model_factory(model_config = config["model"])
+    trainer = trainer_factory(model_id = config[CONFIG_MODEL_KEY][CONFIG_MODEL_ID_KEY])
     
-    tasks = model_adapter.get_metaparameter_grid(config["model"]["params"])
+    tasks = trainer.get_metaparameter_grid(config[CONFIG_MODEL_KEY][CONFIG_MODEL_KWARGS_KEY])
                     
     new_tasks = []
     for task in tasks:
         new_tasks.append({"model_params": task})
     tasks = new_tasks
     
-    if "validation" in config.keys():
-        if "splitter" in config["validation"].keys():
+    if CONFIG_VALIDATION_KEY in config.keys():
+        if "splitter" in config[CONFIG_VALIDATION_KEY].keys():
             splits = _get_splits(df = df, config = config)
             new_tasks = []
             for s in range(len(splits)):
                 for t in range(len(tasks)):
                     new_task = tasks[t].copy()
                     new_task["splits"] = splits[s]
-                    new_task["split_id"] = s
-                    new_task["param_id"] = t
-                    new_task["task_id"] = (s*len(tasks)) + t
+                    new_task[TASK_PARAM_SPLIT_ID] = s
+                    new_task[TASK_PARAM_ID] = t
+                    new_task[TASK_ID] = (s*len(tasks)) + t
                     new_tasks.append(new_task)
             tasks = new_tasks
     
@@ -207,8 +211,8 @@ def _compile_tasks(df, config):
 
 def _get_splits(df, config):
     
-    split_func  = splitter_factory(config["validation"]["splitter"]["id"])
-    splitter = split_func(**config["validation"]["splitter"]["params"])
+    split_func  = splitter_factory(config[CONFIG_VALIDATION_KEY]["splitter"]["id"])
+    splitter = split_func(**config[CONFIG_VALIDATION_KEY]["splitter"]["params"])
     
     splits = []
     for train_index, test_index in splitter.split(df):

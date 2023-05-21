@@ -1,31 +1,64 @@
 from functools import partial
 import pandas as pd
-import numpy as np
 
-from modeling.models import model_factory
-from modeling.validation import splitter_factory, metric_factory
+from modeling.models import trainer_factory
+from modeling.validation import metric_factory
+from .config_constants import *
 
-def train_func(df, params, features, target, config):
-    model_adapter = model_factory(model_config = config["model"])
-    model = model_adapter.train(df = df,
-                                params = params["model_params"],
-                                features = config["data"]["features"]["asis"],
-                                target = config["data"]["target"])
+
+#- Main 
+def train_func(df: pd.DataFrame,
+               params: dict,
+               model_id: dict,
+               features, target):
+
+    """
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        The training data
+
+    params: dict
+            The kwargs for the Trainer given by `model_id`
+
+    model_id: str
+
+    features: str
+
+    target: str
+
+    Returns
+    -------
+    
+    """
+
+
+    trainer = trainer_factory(model_id = model_id)
+    model = trainer.train(df = df,
+                          params = params,
+                          features = features,
+                          target = target)
                                          
     return model
 
-def configure_train_func(config):
-    
-    model_factory(model_config = config["model"])
-        
-    ret = partial(train_func,
-                  features = config["data"]["features"]["asis"],
-                  target   = config["data"]["target"],
-                  config = config)
-                                         
-    return ret
+def eval_func(truth, predictions, metrics):
 
-def eval_func_template(truth, predictions, metrics):
+    """
+
+    Parameters
+    ----------
+    truth: 
+
+    predictions:
+
+    metrics: 
+
+    Returns
+    -------
+    
+    """
+
     scores = {}
     for key in metrics:
         scorer = metric_factory(key)
@@ -39,46 +72,21 @@ def eval_func_template(truth, predictions, metrics):
             
     return ret
 
-def configure_eval_func(config):
-        
-    ret = partial(eval_func_template,
-                  metrics = config["validation"]["evalulation"]["metrics"])
-        
-    return ret
-
-def train_and_eval_template(df, params, holdout, config, target):
+def train_and_eval(df, params, holdout, target, config):
     
     train_func = configure_train_func(config = config)
     eval_func = configure_eval_func(config = config)
     
-    model = train_func(df = df,
-                       params = params)
-    cutoff = ("cutoff" in config["validation"])
+    model = train_func(df = df, params = params[TASK_PARAM_MODEL_KEY])
         
-    model_adapter = model_factory(model_config = config["model"])
-        
-    evaldf, predictions = model_adapter.evalulate_result(model = model,
-                                                         holdout = holdout,
-                                                         target = target,
-                                                         task_params = params["model_params"],
-                                                         eval_func = eval_func,
-                                                         cutoff = cutoff)
+    evaldf, predictions = model.evalulate_result(holdout = holdout,
+                                                 target = target,
+                                                 task_params = params[TASK_PARAM_MODEL_KEY],
+                                                 eval_func = eval_func)
             
     return evaldf, predictions
-
-def configure_train_and_eval_func(config):
     
-    train_func = configure_train_func(config)
-    eval_func = configure_eval_func(config)
-        
-    train_and_eval_func = partial(train_and_eval_template,
-                                  config = config,
-                                  target = config["data"]["target"]
-                                 )
-            
-    return train_and_eval_func
-    
-def split_train_eval_template(df, params, config):
+def split_train_eval(df, params, config):
     train = df.iloc[params["splits"]["train"]]
     holdout = df.iloc[params["splits"]["holdout"]]
     
@@ -88,15 +96,15 @@ def split_train_eval_template(df, params, config):
                                          params = params,
                                          holdout = holdout)
             
-    column_order = ["task_id", "param_id", "split_id"] + evaldf.columns.to_list()
-    evaldf.loc[:, "task_id"] = params["task_id"]
-    evaldf.loc[:, "param_id"] = params["param_id"]
-    evaldf.loc[:, "split_id"] = params["split_id"]
+    column_order = [TASK_ID, TASK_PARAM_ID, TASK_SPLIT_ID] + evaldf.columns.to_list()
+    evaldf.loc[:, TASK_ID] = params[TASK_ID]
+    evaldf.loc[:, TASK_PARAM_ID] = params[TASK_PARAM_ID]
+    evaldf.loc[:, TASK_SPLIT_ID] = params[TASK_SPLIT_ID]
     evaldf = evaldf[column_order]
             
-    predictions.loc[:, "task_id"] = params["task_id"]
-    predictions.loc[:, "param_id"] = params["param_id"]
-    predictions.loc[:, "split_id"] = params["split_id"]
+    predictions.loc[:, TASK_ID] = params[TASK_ID]
+    predictions.loc[:, TASK_PARAM_ID] = params[TASK_PARAM_ID]
+    predictions.loc[:, TASK_SPLIT_ID] = params[TASK_SPLIT_ID]
                    
     ret = {'eval': evaldf,
            'predictions': predictions
@@ -104,10 +112,61 @@ def split_train_eval_template(df, params, config):
             
     return ret 
 
+#- Configuration functions
+def configure_train_func(config):
+    
+    ret = partial(train_func,
+                  model_id = config[CONFIG_MODEL_KEY][CONFIG_MODEL_ID_KEY],
+                  features = config[CONFIG_DATA_KEY][CONFIG_DATA_FEATURES_KEY][CONFIG_DATA_FEATURES_ASIS_KEY],
+                  target = config[CONFIG_DATA_KEY][CONFIG_DATA_TARGET_KEY])
+                                         
+    return ret
+
+def configure_eval_func(config):
+        
+    ret = partial(eval_func,
+                  metrics = config["validation"]["evalulation"]["metrics"])
+        
+    return ret
+
+def configure_train_and_eval_func(config):
+        
+    train_and_eval_func = partial(train_and_eval,
+                                  config = config,
+                                  target = config[CONFIG_DATA_KEY][CONFIG_DATA_TARGET_KEY]
+                                 )
+            
+    return train_and_eval_func
+
 def configure_split_train_eval(config):
-    split_train_eval = partial(split_train_eval_template,
-                               config = config
-                              )
+    split_train_eval_func = partial(split_train_eval,
+                                    config = config
+                                    )
     
-    return split_train_eval    
+    return split_train_eval_func   
     
+#- Config Validation:
+
+def validate_config(config):
+
+    if CONFIG_MODEL_KEY not in config.keys():
+        raise ValueError(f"{CONFIG_MODEL_KEY} not found in top level of config.")
+    else:
+        if CONFIG_MODEL_ID_KEY not in config[CONFIG_MODEL_KEY].keys():
+            raise ValueError(f"{CONFIG_MODEL_ID_KEY} not found in {CONFIG_MODEL_KEY} level of config.")
+        elif CONFIG_MODEL_KWARGS_KEY not in config[CONFIG_MODEL_KEY].keys():
+            raise ValueError(f"{CONFIG_MODEL_KWARGS_KEY} not found in {CONFIG_MODEL_KEY} level of config.")
+        else:
+            #-TODO check that kwargs are valid
+            for key in config[CONFIG_MODEL_KEY][CONFIG_MODEL_KWARGS_KEY].keys():
+                if type(config[CONFIG_MODEL_KEY][CONFIG_MODEL_KWARGS_KEY][key]) == list:
+                    if CONFIG_VALIDATION_KEY not in config.keys():
+                        raise ValueError("Lists found in model parameters but validation config not found.")
+    if CONFIG_DATA_KEY not in config.keys():
+        raise ValueError(f"{CONFIG_DATA_KEY} not found in top level of config.")
+    else: 
+        if CONFIG_DATA_TARGET_KEY not in config[CONFIG_DATA_KEY].keys():
+            raise ValueError(f'{CONFIG_DATA_TARGET_KEY} not in data config.')
+    if CONFIG_VALIDATION_KEY in config.keys():
+        pass
+    return True

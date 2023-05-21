@@ -1,21 +1,19 @@
 
-from ._model_adapter import model_adapter, model_wrapper
-from ._xgb_adapter import xgboost_adapter
+from ._model_adapter import Trainer, Predictor
+from ._xgb_adapter import XGBoostTrainer
 
-_adapter_lookup = {}
-_adapter_lookup["xgboost"] = xgboost_adapter
+_trainer_lookup = {}
+_trainer_lookup["xgboost"] = XGBoostTrainer
 
-def model_factory(model_config):
+def trainer_factory(model_id):
     
-    key = model_config["id"]
-    
-    if key not in _adapter_lookup.keys():
-        raise ValueError("Model key not found")
+    if model_id not in _trainer_lookup.keys():
+        raise ValueError(f"Model key: {model_id} not found")
         
-    return _adapter_lookup[key](model_config = model_config)
+    return _trainer_lookup[model_id]()
 
 __all__ = [
-    "model_adapter",
-    "model_factory"
-    "model_wrapper"
+    "trainer_factory"
+    "Trainer",
+    "Predictor"
 ]

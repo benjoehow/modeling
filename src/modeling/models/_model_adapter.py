@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 
-class model_adapter(ABC):
+##-TODO split out validation from training
+
+class Trainer(ABC):
     
     _skip_job_keys = []
-    
-    def __init__(self, model_config):
-        super.__init__(model_config = config)
     
     def get_metaparameter_grid(self, params):
         
@@ -34,6 +33,7 @@ class model_adapter(ABC):
         
         return ret
     
+    @abstractmethod
     def prep_data(self, df, label, features):
         return NotImplemented
     
@@ -41,22 +41,23 @@ class model_adapter(ABC):
     def train(self, features, target):
         return NotImplemented
     
-    @abstractmethod
-    def get_post_train_diagnostics(self, model):
-        return NotImplemented
-        
-    def evalulate_result(self, model, holdout, task_params, eval_params):
-        return NotImplemented
-    
-    
-class model_wrapper(ABC):
+
+class Predictor(ABC):
     
     def __init__(self, model, features):
         self._model = model
         self._features = features
     
     @abstractmethod
+    def get_post_train_diagnostics(self, model):
+        return NotImplemented
+    
+    @abstractmethod
     def predict(self, data):
+        return NotImplemented
+    
+    @abstractmethod
+    def evalulate_result(self, model, holdout, task_params, eval_params):
         return NotImplemented
     
     
