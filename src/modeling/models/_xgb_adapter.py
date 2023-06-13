@@ -3,6 +3,8 @@ from modeling.models import Trainer, Predictor
 
 import pandas as pd
 
+from ..config_constants import *
+
 class XGBoostTrainer(Trainer):
     
     _skip_job_keys = ["num_boost_round"]
@@ -19,6 +21,7 @@ class XGBoostTrainer(Trainer):
         return data
         
     def train(self, params, df, features, target):
+        #print(f"train keys: {params.keys()}")
         data = self.prep_data(df = df,
                               features = features,
                               target = target)
@@ -67,6 +70,9 @@ class XGBoostPredictor(Predictor):
                          target,
                          task_params,
                          eval_func):
+        
+        if TASK_PARAM_MODEL_KEY in task_params.keys():
+            raise KeyError(f"{TASK_PARAM_MODEL_KEY} found in params argument in Predictor's evalulate_result")
         
         evaldf_final = pd.DataFrame()
         predictions_final = pd.DataFrame()

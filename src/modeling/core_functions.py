@@ -5,8 +5,6 @@ from modeling.models import trainer_factory
 from modeling.validation import metric_factory
 from .config_constants import *
 
-
-#- Main 
 def train_func(df: pd.DataFrame,
                params: dict,
                model_id: dict,
@@ -32,11 +30,14 @@ def train_func(df: pd.DataFrame,
     -------
     
     """
+    #print(f"train param keys: {params.keys()}")
 
+    if TASK_PARAM_MODEL_KEY not in params.keys():
+        raise KeyError(f"{TASK_PARAM_MODEL_KEY} not found in params argument")
 
     trainer = trainer_factory(model_id = model_id)
     model = trainer.train(df = df,
-                          params = params,
+                          params = params[TASK_PARAM_MODEL_KEY],
                           features = features,
                           target = target)
                                          
@@ -73,11 +74,13 @@ def eval_func(truth, predictions, metrics):
     return ret
 
 def train_and_eval(df, params, holdout, target, config):
+    # print(f"train eval param keys: {params.keys()}")
+
     
     train_func = configure_train_func(config = config)
     eval_func = configure_eval_func(config = config)
     
-    model = train_func(df = df, params = params[TASK_PARAM_MODEL_KEY])
+    model = train_func(df = df, params = params)
         
     evaldf, predictions = model.evalulate_result(holdout = holdout,
                                                  target = target,
@@ -87,6 +90,8 @@ def train_and_eval(df, params, holdout, target, config):
     return evaldf, predictions
     
 def split_train_eval(df, params, config):
+    #print(f"split train eval param keys: {params.keys()}")
+
     train = df.iloc[params["splits"]["train"]]
     holdout = df.iloc[params["splits"]["holdout"]]
     
@@ -96,15 +101,15 @@ def split_train_eval(df, params, config):
                                          params = params,
                                          holdout = holdout)
             
-    column_order = [TASK_ID, TASK_PARAM_ID, TASK_SPLIT_ID] + evaldf.columns.to_list()
+    column_order = [TASK_ID, TASK_PARAM_ID, TASK_PARAM_SPLIT_ID] + evaldf.columns.to_list()
     evaldf.loc[:, TASK_ID] = params[TASK_ID]
     evaldf.loc[:, TASK_PARAM_ID] = params[TASK_PARAM_ID]
-    evaldf.loc[:, TASK_SPLIT_ID] = params[TASK_SPLIT_ID]
+    evaldf.loc[:, TASK_PARAM_SPLIT_ID] = params[TASK_PARAM_SPLIT_ID]
     evaldf = evaldf[column_order]
             
     predictions.loc[:, TASK_ID] = params[TASK_ID]
     predictions.loc[:, TASK_PARAM_ID] = params[TASK_PARAM_ID]
-    predictions.loc[:, TASK_SPLIT_ID] = params[TASK_SPLIT_ID]
+    predictions.loc[:, TASK_PARAM_SPLIT_ID] = params[TASK_PARAM_SPLIT_ID]
                    
     ret = {'eval': evaldf,
            'predictions': predictions

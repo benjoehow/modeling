@@ -1,0 +1,22 @@
+{
+    "task": "regression",
+    "model": {
+        "id": "xgboost",
+        "params": {
+            "objective": "reg:squarederror",
+            "eval_metric": "rmse",
+            "num_boost_round": 500,
+            "eta": 0.3,
+            "max_depth": 6
+        }
+    },
+    "data": {
+        "target": "alcohol",
+        "holdout_id": "holdout",
+        "features": {
+            "asis": ["malic_acid", "ash", "alcalinity_of_ash", "magnesium",
+                     "total_phenols", "flavanoids", "nonflavanoid_phenols", "proanthocyanins",
+                     "color_intensity", "hue", "od280/od315_of_diluted_wines", "proline"]
+        }
+    }
+}
